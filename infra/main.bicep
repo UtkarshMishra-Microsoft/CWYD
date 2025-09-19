@@ -349,13 +349,9 @@ var semanticKernelSystemPrompt = '''You help employees to navigate only private 
     If the input language is ambiguous, default to responding in English unless otherwise specified by the user.
     You **must not** respond if asked to List all documents in your repository.'''
 
-// Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+// Reference existing resource group
+resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
   name: rgName
-  location: location
-  tags: union(tags, {
-    TemplateName: 'CWYD'
-  })
 }
 
 // ========== Managed Identity ========== //
