@@ -12,7 +12,7 @@ param accessTier string = 'Hot'
 param allowBlobPublicAccess bool = false
 param allowCrossTenantReplication bool = true
 param containers array = []
-param defaultToOAuthAuthentication bool = false
+param defaultToOAuthAuthentication bool = true
 param deleteRetentionPolicy object = {}
 @allowed(['AzureDnsZone', 'Standard'])
 param dnsEndpointType string = 'Standard'
