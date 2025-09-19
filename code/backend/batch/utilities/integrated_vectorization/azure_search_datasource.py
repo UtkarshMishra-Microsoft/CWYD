@@ -8,17 +8,24 @@ from azure.search.documents.indexes._generated.models import (
 from azure.search.documents.indexes import SearchIndexerClient
 from ..helpers.env_helper import EnvHelper
 from ..helpers.azure_credential_utils import get_azure_credential
+from azure.core.credentials import AzureKeyCredential
+
 
 class AzureSearchDatasource:
     def __init__(self, env_helper: EnvHelper):
         self.env_helper = env_helper
         self.indexer_client = SearchIndexerClient(
             self.env_helper.AZURE_SEARCH_SERVICE,
-            get_azure_credential(),
+            (
+                AzureKeyCredential(self.env_helper.AZURE_SEARCH_KEY)
+                if self.env_helper.is_auth_type_keys()
+                else get_azure_credential()
+            ),
         )
 
     def create_or_update_datasource(self):
         connection_string = self.generate_datasource_connection_string()
+        # Create Datasource
         container = SearchIndexerDataContainer(
             name=self.env_helper.AZURE_BLOB_CONTAINER_NAME
         )
@@ -34,9 +41,7 @@ class AzureSearchDatasource:
         )
 
     def generate_datasource_connection_string(self):
-        # Always use ResourceId-based connection string (for RBAC/Azure AD)
-        return (
-            f"ResourceId=/subscriptions/{self.env_helper.AZURE_SUBSCRIPTION_ID}"
-            f"/resourceGroups/{self.env_helper.AZURE_RESOURCE_GROUP}"
-            f"/providers/Microsoft.Storage/storageAccounts/{self.env_helper.AZURE_BLOB_ACCOUNT_NAME}/;"
-        )
+        if self.env_helper.is_auth_type_keys():
+            return f"DefaultEndpointsProtocol=https;AccountName={self.env_helper.AZURE_BLOB_ACCOUNT_NAME};AccountKey={self.env_helper.AZURE_BLOB_ACCOUNT_KEY};EndpointSuffix=core.windows.net"
+        else:
+            return f"ResourceId=/subscriptions/{self.env_helper.AZURE_SUBSCRIPTION_ID}/resourceGroups/{self.env_helper.AZURE_RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/{self.env_helper.AZURE_BLOB_ACCOUNT_NAME}/;"
