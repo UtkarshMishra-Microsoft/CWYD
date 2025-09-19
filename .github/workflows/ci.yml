@@ -17,7 +17,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     outputs:
-      RESOURCE_GROUP_NAME: ${{ steps.check_create_rg.outputs.RESOURCE_GROUP_NAME }}
+      RESOURCE_GROUP_NAME: ${{ steps.generate_rg_name.outputs.RESOURCE_GROUP_NAME }}
       WEBAPP_URL: ${{ steps.get_output.outputs.WEBAPP_URL }}
       DEPLOYMENT_SUCCESS: ${{ steps.deployment_status.outputs.SUCCESS }}
     steps:
@@ -42,30 +42,26 @@ jobs:
           UNIQUE_RG_NAME="arg-${ACCL_NAME}-${SHORT_UUID}"
           echo "RESOURCE_GROUP_NAME=${UNIQUE_RG_NAME}" >> $GITHUB_ENV
           echo "Generated RESOURCE_GROUP_NAME: ${UNIQUE_RG_NAME}"
+          echo "RESOURCE_GROUP_NAME=${UNIQUE_RG_NAME}" >> $GITHUB_OUTPUT
 
       - name: Set Deployment Region
         run: |
           echo "AZURE_LOCATION=eastus" >> $GITHUB_ENV
 
-      - name: Check and Create Resource Group
-        id: check_create_rg
+      - name: Create Resource Group
         run: |
-          rg_exists=$(az group exists --name ${{ env.RESOURCE_GROUP_NAME }})
-          if [ "$rg_exists" = "false" ]; then
-            az group create --name ${{ env.RESOURCE_GROUP_NAME }} --location ${{ env.AZURE_LOCATION }}
-          fi
-          echo "RESOURCE_GROUP_NAME=${{ env.RESOURCE_GROUP_NAME }}" >> $GITHUB_OUTPUT
+          az group create --name ${{ env.RESOURCE_GROUP_NAME }} --location ${{ env.AZURE_LOCATION }}
 
       - name: Install Bicep CLI
         run: az bicep install
 
-      - name: Deploy Bicep Template (Resource Group Scope)
+      - name: Deploy Bicep Template (Subscription Scope)
         id: deploy
         run: |
-          az deployment group create \
-            --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
+          az deployment sub create \
+            --location ${{ env.AZURE_LOCATION }} \
             --template-file infra/main.bicep \
-            --parameters solutionName=${{ env.RESOURCE_GROUP_NAME }} createdBy="Pipeline"
+            --parameters environmentName=${{ env.RESOURCE_GROUP_NAME }} location=${{ env.AZURE_LOCATION }} rgName=${{ env.RESOURCE_GROUP_NAME }} createdBy="Pipeline"
 
       - name: Extract Web App URLs
         id: get_output
