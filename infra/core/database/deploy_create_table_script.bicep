@@ -10,7 +10,7 @@ param managedIdentityName string
 param functionAppPrincipalName string
 param storageAccountName string
 
-resource create_index 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource create_index 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   kind:'AzureCLI'
   name: 'create_postgres_table'
   location: solutionLocation // Replace with your desired location
@@ -39,13 +39,19 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing 
   scope: resourceGroup()
 }
 
+// Reference to the user-assigned managed identity
+resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: managedIdentityName
+  scope: resourceGroup()
+}
+
 // Role assignment for user-assigned managed identity to access storage account
-resource createIndexRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(storageAccount.id, identity, 'StorageBlobDataContributor')
+resource scriptRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(storageAccount.id, userAssignedIdentity.id, 'StorageBlobDataContributor')
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: reference(identity, '2023-01-31').principalId
+    principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
