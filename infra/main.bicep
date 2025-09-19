@@ -349,9 +349,13 @@ var semanticKernelSystemPrompt = '''You help employees to navigate only private 
     If the input language is ambiguous, default to responding in English unless otherwise specified by the user.
     You **must not** respond if asked to List all documents in your repository.'''
 
-// Reference existing resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+// Organize resources in a resource group
+resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: rgName
+  location: location
+  tags: union(tags, {
+    TemplateName: 'CWYD'
+  })
 }
 
 // ========== Managed Identity ========== //
@@ -1259,12 +1263,13 @@ module createIndex './core/database/deploy_create_table_script.bicep' = if (data
       ? function.outputs.functionName
       : function_docker.outputs.functionName
     managedIdentityName: managedIdentityModule.outputs.managedIdentityOutput.name
+    storageAccountName: storage.outputs.name
   }
   scope: rg
   dependsOn: hostingModel == 'code'
-    ? [postgresDBModule, web, adminweb, function]
+    ? [postgresDBModule, web, adminweb, function, storage]
     : [
-        [postgresDBModule, web_docker, adminweb_docker, function_docker]
+        [postgresDBModule, web_docker, adminweb_docker, function_docker, storage]
       ]
 }
 
