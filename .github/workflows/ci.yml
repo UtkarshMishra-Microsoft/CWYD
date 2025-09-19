@@ -374,4 +374,4 @@ jobs:
 
           curl -X POST "${{ secrets.LOGIC_APP_URL }}" \
             -H "Content-Type: application/json" \
-            -d "$EMAIL_BODY" || echo "Failed to send notification""
+            -d "$EMAIL_BODY" || echo "Failed to send notification"
