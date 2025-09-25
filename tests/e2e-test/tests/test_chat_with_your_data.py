@@ -3,7 +3,6 @@ import time
 import pytest
 import io
 
-
 from config.constants import *
 from pages.adminPage import AdminPage
 from pages.webUserPage import WebUserPage
@@ -11,17 +10,20 @@ from pages.webUserPage import WebUserPage
 logger = logging.getLogger(__name__)
 
 # === Step Functions ===
-# === Step Functions ===
-
 
 def validate_admin_page_loaded(page, admin_page, home_page):
     page.goto(ADMIN_URL)
     actual_title = page.locator(admin_page.ADMIN_PAGE_TITLE).text_content()
     assert actual_title == "Chat with your data Solution Accelerator", "Admin page title mismatch"
 
-
-
 def validate_files_are_uploaded(page, admin_page, home_page):
+    # --- CHANGE START ---
+    # Upload a test file before verifying checkboxes
+    # The file path should exist in your repo; update if needed
+    test_file_path = "tests/e2e-test/data/sample-test-file.pdf"
+    admin_page.upload_test_file(test_file_path)  # You need to implement this in AdminPage if missing
+    # --- CHANGE END ---
+
     admin_page.click_delete_data_tab()
     page.wait_for_timeout(5000)
     checkbox_count = page.locator(admin_page.DELETE_CHECK_BOXES).count()
@@ -29,8 +31,6 @@ def validate_files_are_uploaded(page, admin_page, home_page):
 
 def goto_web_page(page, admin_page, home_page):
     page.goto(WEB_URL)
-
-
 
 def delete_chat_history(page, admin_page, home_page):
     home_page.delete_chat_history()
@@ -83,7 +83,6 @@ def test_golden_path_steps(login_logout, step_desc, action, request):
         logger.info(f"✅ END: {step_desc} | Execution Time: {duration:.2f}s")
         logger.removeHandler(handler)
         setattr(request.node, "_captured_log", log_capture.getvalue())
-
 
 # === Each Question as a Separate Test Case ===
 
@@ -144,7 +143,6 @@ def test_gp_question(login_logout, question, request):
         logger.info(f"[GP] [{question}] Execution Time: {duration:.2f}s")
         logger.removeHandler(handler)
         setattr(request.node, "_captured_log", log_capture.getvalue())
-
 
 # === Chat History Test ===
 
